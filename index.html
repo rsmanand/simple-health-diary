@@ -1,60 +1,336 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Murugu | Industrial Consultant</title>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+  <meta charset="utf-8" />
+  <title>Simple Health Diary</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json">
+
+  <!-- App Icons for iOS / Android -->
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="icon" sizes="192x192" href="icons/icon-192.png">
+  <link rel="icon" sizes="512x512" href="icons/icon-512.png">
+
+  <meta name="theme-color" content="#1565c0">
+
   <style>
-    body {
-      margin: 0;
-      font-family: 'Roboto', sans-serif;
-      background-color: #f8f9fa;
-      color: #333;
+    :root{--bg:#f4f6f8;--card:#fff;--accent:#1565c0;--danger:#d32f2f}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; background:var(--bg); margin:0;padding:18px;display:flex;justify-content:center}
+    .wrap{max-width:900px;width:100%}
+    h1{text-align:center;color:#073b6a;margin:4px 0 12px}
+    .card{background:var(--card);padding:16px;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,0.06);margin-bottom:12px}
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    label{font-size:13px;color:#333}
+    .field{flex:1;min-width:150px}
+    input[type="text"],input[type="number"],textarea,select{
+      width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:14px;box-sizing:border-box
     }
-    header {
-      background-color: #6c63ff;
-      color: white;
-      padding: 2rem;
-      text-align: center;
-    }
-    header h1 {
-      margin: 0;
-      font-size: 2.5rem;
-    }
-    header p {
-      font-size: 1.2rem;
-    }
-    section {
-      max-width: 1000px;
-      margin: 2rem auto;
-      padding: 1rem;
-      background-color: white;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    h2 {
-      color: #6c63ff;
-      margin-top: 0;
-    }
-    ul {
-      padding-left: 1.5rem;
-    }
-    footer {
-      text-align: center;
-      padding: 1rem;
-      background-color: #f1f1f1;
-      font-size: 0.9rem;
-      color: #555;
-    }
-    .contact {
-      text-align: center;
-      margin-top: 1.5rem;
-    }
-    .contact a {
-      color: #6c63ff;
-      text-decoration: none;
-    }
+    textarea{min-height:64px;resize:vertical}
+    .small{max-width:160px}
+    .buttons{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
+    button{padding:10px 14px;border-radius:8px;border:0;background:var(--accent);color:#fff;font-weight:600;cursor:pointer}
+    button.ghost{background:#eee;color:#333}
+    button.danger{background:var(--danger)}
+    .muted{color:#666;font-size:13px;margin-top:6px}
+    .dateRow{display:flex;justify-content:space-between;align-items:center;gap:10px}
+    .historyList{max-height:220px;overflow:auto;padding:6px;border:1px dashed #eee;border-radius:6px;background:#fafafa}
+    .historyItem{padding:8px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center}
+    .link{color:var(--accent);cursor:pointer;text-decoration:underline;font-size:13px}
+    .export{background:#00796b}
+    .flex-between{display:flex;justify-content:space-between;align-items:center}
+    @media(max-width:640px){.row{flex-direction:column}}
   </style>
 </head>
 <body>
-  <header>
+  <div class="wrap">
+    <h1>Simple Health Diary</h1>
+
+    <div class="card dateRow">
+      <div>
+        <div style="font-size:14px;color:#444">Today's Date</div>
+        <div id="lblDate" style="font-weight:700;font-size:18px;margin-top:6px"></div>
+        <div class="muted">Use the calendar icon or type a date to view/edit other dates.</div>
+      </div>
+
+      <div style="min-width:180px">
+        <label for="pickDate">Pick date (yyyy-mm-dd)</label>
+        <input id="pickDate" type="date" />
+        <div style="margin-top:8px;font-size:13px;color:#444">Status: <span id="status">Ready</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="font-weight:700;margin-bottom:8px">Daily Entry</div>
+
+      <div class="row">
+        <div class="field">
+          <label>Wake-up time</label>
+          <input id="txtWakeUp" type="text" placeholder="e.g., 06:30 AM">
+        </div>
+
+        <div class="field small">
+          <label>Water (ml)</label>
+          <input id="txtWater" type="number" placeholder="ml">
+        </div>
+
+        <div class="field">
+          <label>Breakfast</label>
+          <input id="txtBreakfast" type="text" placeholder="breakfast items">
+        </div>
+
+        <div class="field">
+          <label>Lunch</label>
+          <input id="txtLunch" type="text" placeholder="lunch items">
+        </div>
+
+        <div class="field">
+          <label>Dinner</label>
+          <input id="txtDinner" type="text" placeholder="dinner items">
+        </div>
+
+        <div class="field small">
+          <label>Tea (cups)</label>
+          <input id="txtTea" type="number" placeholder="cups">
+        </div>
+
+        <div class="field small">
+          <label>Coffee (cups)</label>
+          <input id="txtCoffee" type="number" placeholder="cups">
+        </div>
+
+        <div class="field">
+          <label>Lime juice</label>
+          <input id="txtLime" type="text" placeholder="Lime / lemon drink">
+        </div>
+
+        <div class="field">
+          <label>Snacks</label>
+          <input id="txtSnacks" type="text" placeholder="snacks">
+        </div>
+
+        <div class="field small">
+          <label>Walking (minutes)</label>
+          <input id="txtWalk" type="number" placeholder="mins">
+        </div>
+
+        <div class="field small">
+          <label>Sleep time (hrs)</label>
+          <input id="txtSleep" type="number" placeholder="hours">
+        </div>
+
+        <div class="field small">
+          <label>Pulse (bpm)</label>
+          <input id="txtPulse" type="number" placeholder="pulse">
+        </div>
+
+        <div class="field small">
+          <label>BP (sys/diast)</label>
+          <input id="txtBP" type="text" placeholder="120/80">
+        </div>
+
+        <div class="field small">
+          <label>Weight (kg)</label>
+          <input id="txtWeight" type="number" step="0.1" placeholder="kg">
+        </div>
+
+        <div class="field small">
+          <label>Urine output (ml)</label>
+          <input id="txtUrine" type="number" placeholder="ml">
+        </div>
+
+        <div class="field" style="flex-basis:100%">
+          <label>Notes / Remarks</label>
+          <textarea id="txtNotes" placeholder="Any notes..."></textarea>
+        </div>
+      </div>
+
+      <div class="buttons">
+        <button onclick="saveEntry()">SAVE</button>
+        <button class="ghost" onclick="clearForm()">CLEAR</button>
+        <button class="ghost" onclick="loadToday()">LOAD TODAY</button>
+        <button class="export" onclick="exportCSV()">EXPORT CSV</button>
+        <button class="danger" onclick="deleteEntry()" title="Delete today's entry">DELETE</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="flex-between">
+        <div style="font-weight:700">History</div>
+        <div class="muted">Tap a date to view/edit. Long-press to delete (mobile).</div>
+      </div>
+      <div id="historyContainer" class="historyList" style="margin-top:8px"></div>
+      <div style="margin-top:8px">
+        <button class="ghost" onclick="clearAllData()" title="Remove all saved entries">Clear ALL saved data</button>
+      </div>
+    </div>
+
+  </div>
+
+<script>
+/* -------------------------------
+   PWA Service Worker Registration
+--------------------------------*/
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("./service-worker.js");
+}
+
+/* --------------------------------
+   Your Existing App JavaScript
+--------------------------------*/
+
+// Keys and helpers
+function dateKey(d) { return d; } // date in yyyy-mm-dd
+function nowDateISO() { return new Date().toISOString().slice(0,10); }
+
+// Element refs
+const lblDate = document.getElementById('lblDate');
+const pickDate = document.getElementById('pickDate');
+const status = document.getElementById('status');
+const historyContainer = document.getElementById('historyContainer');
+
+// form fields
+const ids = ["txtWakeUp","txtWater","txtBreakfast","txtLunch","txtDinner","txtTea","txtCoffee","txtLime","txtSnacks","txtWalk","txtSleep","txtPulse","txtBP","txtWeight","txtUrine","txtNotes"];
+function el(id){return document.getElementById(id)}
+
+// initialize UI
+const todayKey = nowDateISO();
+lblDate.textContent = todayKey;
+pickDate.value = todayKey;
+
+// Load list of saved dates
+function getAllKeys(){
+  try{
+    const keys = JSON.parse(localStorage.getItem('_all_dates')) || [];
+    return keys;
+  }catch(e){ return [] }
+}
+function saveAllKeys(list){
+  localStorage.setItem('_all_dates', JSON.stringify(list));
+}
+
+// Save entry for selected date
+function saveEntry(){
+  const date = pickDate.value || nowDateISO();
+  const data = {};
+  ids.forEach(k => { data[k] = el(k).value || "" });
+  localStorage.setItem(dateKey(date), JSON.stringify(data));
+  // maintain index
+  let keys = getAllKeys();
+  if(!keys.includes(date)) { keys.unshift(date); if(keys.length>1000) keys=keys.slice(0,1000); saveAllKeys(keys); }
+  status.textContent = 'Saved '+date;
+  refreshHistory();
+}
+
+// Load entry for a date into form
+function loadEntry(date){
+  const raw = localStorage.getItem(dateKey(date));
+  if(!raw){
+    clearForm();
+    status.textContent = 'No entry for '+date;
+    return;
+  }
+  const data = JSON.parse(raw);
+  ids.forEach(k => { el(k).value = data[k] || "" });
+  pickDate.value = date;
+  lblDate.textContent = date;
+  status.textContent = 'Loaded '+date;
+}
+
+// Load today's entry
+function loadToday(){ loadEntry(pickDate.value || nowDateISO()) }
+
+// Clear form fields only
+function clearForm(){
+  ids.forEach(k => { el(k).value = "" });
+  status.textContent = 'Form cleared';
+}
+
+// Delete today's entry
+function deleteEntry(){
+  const date = pickDate.value || nowDateISO();
+  if(!localStorage.getItem(dateKey(date))) { status.textContent='Nothing to delete for '+date; return; }
+  if(!confirm('Delete entry for '+date+' ?')) return;
+  localStorage.removeItem(dateKey(date));
+  // remove from keys
+  let keys = getAllKeys();
+  keys = keys.filter(k => k !== date);
+  saveAllKeys(keys);
+  status.textContent = 'Deleted '+date;
+  refreshHistory();
+  clearForm();
+}
+
+// Clear all saved data (danger)
+function clearAllData(){
+  if(!confirm('Delete ALL saved entries? This cannot be undone.')) return;
+  const keys = getAllKeys();
+  keys.forEach(k => localStorage.removeItem(k));
+  localStorage.removeItem('_all_dates');
+  status.textContent = 'All data removed';
+  refreshHistory();
+  clearForm();
+}
+
+// Export CSV (all data)
+function exportCSV(){
+  const keys = getAllKeys();
+  if(keys.length===0){ alert('No data to export'); return; }
+  const header = ['Date'].concat(ids);
+  const rows = [header];
+  keys.forEach(date => {
+    const raw = localStorage.getItem(date);
+    if(!raw) return;
+    const data = JSON.parse(raw);
+    const row = [date].concat(ids.map(k=> `"${(data[k]||'').toString().replace(/"/g,'""')}"`));
+    rows.push(row);
+  });
+  const csv = rows.map(r=> r.join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'health_diary_export.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  status.textContent = 'CSV Exported';
+}
+
+// Refresh history list in UI
+function refreshHistory(){
+  const keys = getAllKeys();
+  historyContainer.innerHTML = '';
+  if(keys.length===0){ historyContainer.innerHTML = '<div class="muted">No saved dates yet.</div>'; return; }
+  keys.forEach(date => {
+    const div = document.createElement('div');
+    div.className='historyItem';
+    const left = document.createElement('div');
+    left.innerHTML = `<div style="font-weight:600">${date}</div><div style="font-size:13px;color:#555">Click to load</div>`;
+    const right = document.createElement('div');
+    const btnLoad = document.createElement('button'); btnLoad.className='ghost'; btnLoad.style.padding='6px 8px'; btnLoad.textContent='Load';
+    btnLoad.onclick = ()=> loadEntry(date);
+    const btnDel = document.createElement('button'); btnDel.className='danger'; btnDel.style.padding='6px 8px'; btnDel.style.marginLeft='8px'; btnDel.textContent='Delete';
+    btnDel.onclick = ()=> { if(confirm('Delete '+date+'?')){ localStorage.removeItem(date); let ks=getAllKeys().filter(k=>k!==date); saveAllKeys(ks); refreshHistory(); status.textContent='Deleted '+date; } };
+    right.appendChild(btnLoad); right.appendChild(btnDel);
+    div.appendChild(left); div.appendChild(right);
+    historyContainer.appendChild(div);
+  });
+}
+
+// on pickDate change load that date
+pickDate.addEventListener('change', ()=> loadEntry(pickDate.value));
+
+// initial load
+(function init(){
+  // if no index, create
+  if(!localStorage.getItem('_all_dates')) saveAllKeys([]);
+  // show today date on top
+  lblDate.textContent = pickDate.value = nowDateISO();
+  loadToday();
+  refreshHistory();
+})();
+</script>
+
+</body>
+</html>
