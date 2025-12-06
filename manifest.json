@@ -1,43 +1,30 @@
 {
-  "name": "Health Diary",
+  "name": "Simple Health Diary",
   "short_name": "HealthDiary",
-  "description": "Track daily health metrics like water intake, sleep, vitals, activities, and more.",
-  "start_url": "./index.html",
-  "scope": "./",
+  "description": "Track daily health metrics like water intake, wake-up time, diet, sleep, vitals, notes, activities, and more.",
+  "start_url": ".",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#ffffff",
   "theme_color": "#1565c0",
+
   "icons": [
     {
       "src": "icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     },
     {
       "src": "icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     }
-  ],
-  "screenshots": [
-    {
-      "src": "icons/screenshot1.jpg",
-      "sizes": "1080x1920",
-      "type": "image/jpeg",
-      "form_factor": "narrow"
-    },
-    {
-      "src": "icons/screenshot2.jpg",
-      "sizes": "1920x1080",
-      "type": "image/jpeg",
-      "form_factor": "wide"
-    }
-  ],
-  "categories": ["health", "productivity"]
+  ]
 }
+
+
 
 
 
