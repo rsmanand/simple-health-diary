@@ -1,4 +1,3 @@
-
 {
   "name": "Health Diary",
   "short_name": "HealthDiary",
@@ -39,6 +38,8 @@
   ],
   "categories": ["health", "productivity"]
 }
+
+
 
 
 
