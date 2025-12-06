@@ -5,24 +5,45 @@
   "start_url": "index.html",
   "scope": "./",
   "display": "standalone",
+ {
   "background_color": "#ffffff",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "rsmanand.github",
+  "orientation": "any",
+  "scope": "/",
+  "short_name": "rsmanand.github",
+  "start_url": "/",
   "theme_color": "#1565c0",
   "icons": [
     {
-      "src": "icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-     "purpose": "any maskable"
+      "src": "https://rsmanand.github.io/simple-health-diary/icon-192.png",
+      "type": "image/jpeg",
+      "sizes": "736x736",
+      "isSquare": true,
+      "isPng": true,
+      "isWebp": false,
+      "isJpg": true,
+      "width": 736,
+      "is512x512": false,
+      "is256x256": false,
+      "is192x192": false
     },
     {
-      "src": "icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png"
-     "purpose": "any maskable"
+      "src": "https://rsmanand.github.io/simple-health-diary/icon-512.png",
+      "type": "image/jpeg",
+      "sizes": "736x736",
+      "isSquare": true,
+      "isPng": true,
+      "isWebp": false,
+      "isJpg": true,
+      "width": 736,
+      "is512x512": false,
+      "is256x256": false,
+      "is192x192": false
     }
   ]
 }
-
 
 
 
