@@ -1,337 +1,578 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Simple Health Diary</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-
-  <!-- PWA Manifest -->
+  <title>Simple Health Diary</title>
   <link rel="manifest" href="manifest.json">
-
-  <!-- App Icons for iOS / Android -->
-  <link rel="apple-touch-icon" href="icon-192.png">
-  <link rel="icon" sizes="192x192" href="icon-192.png">
-  <link rel="icon" sizes="512x512" href="icon-512.png">
-
-  <meta name="theme-color" content="#1565c0">
-
+  <meta name="theme-color" content="#6a5acd" />
   <style>
-    :root{--bg:#f4f6f8;--card:#fff;--accent:#1565c0;--danger:#d32f2f}
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; background:var(--bg); margin:0;padding:18px;display:flex;justify-content:center}
-    .wrap{max-width:900px;width:100%}
-    h1{text-align:center;color:#073b6a;margin:4px 0 12px}
-    .card{background:var(--card);padding:16px;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,0.06);margin-bottom:12px}
-    .row{display:flex;gap:10px;flex-wrap:wrap}
-    label{font-size:13px;color:#333}
-    .field{flex:1;min-width:150px}
-    input[type="text"],input[type="number"],textarea,select{
-      width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:14px;box-sizing:border-box
-    }
-    textarea{min-height:64px;resize:vertical}
-    .small{max-width:160px}
-    .buttons{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
-    button{padding:10px 14px;border-radius:8px;border:0;background:var(--accent);color:#fff;font-weight:600;cursor:pointer}
-    button.ghost{background:#eee;color:#333}
-    button.danger{background:var(--danger)}
-    .muted{color:#666;font-size:13px;margin-top:6px}
-    .dateRow{display:flex;justify-content:space-between;align-items:center;gap:10px}
-    .historyList{max-height:220px;overflow:auto;padding:6px;border:1px dashed #eee;border-radius:6px;background:#fafafa}
-    .historyItem{padding:8px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center}
-    .link{color:var(--accent);cursor:pointer;text-decoration:underline;font-size:13px}
-    .export{background:#00796b}
-    .flex-between{display:flex;justify-content:space-between;align-items:center}
-    @media(max-width:640px){.row{flex-direction:column}}
+    /* Basic clean UI, responsive */
+    :root{--bg:#f7f7fb;--card:#fff;--accent:#6a5acd;--muted:#666}
+    *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
+    body{margin:0;background:var(--bg);color:#111}
+    header{background:linear-gradient(90deg,var(--accent),#8a7be6);color:#fff;padding:14px 16px}
+    header h1{margin:0;font-size:18px}
+    nav.tabs{display:flex;background:transparent;padding:8px 6px;border-bottom:1px solid #eee}
+    nav.tabs button{flex:1;padding:10px;border:0;background:transparent;cursor:pointer;font-weight:600}
+    nav.tabs button.active{background:linear-gradient(180deg,rgba(255,255,255,0.06),transparent);border-radius:8px}
+    main{padding:12px}
+    .card{background:var(--card);padding:12px;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,0.06);margin-bottom:12px}
+    label{display:block;font-size:13px;margin-bottom:6px;color:var(--muted)}
+    input,select,textarea{width:100%;padding:8px;border:1px solid #e6e6ea;border-radius:6px}
+    .row{display:flex;gap:10px}
+    .row .col{flex:1}
+    .small{font-size:13px;color:var(--muted)}
+    .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#f0eefc;color:var(--accent);font-weight:700}
+    .summary{display:flex;gap:10px;flex-wrap:wrap}
+    .summary .item{flex:1;min-width:140px;padding:10px;border-radius:8px;background:#fff}
+    footer{padding:10px;text-align:center;color:var(--muted);font-size:13px}
+    .btn{display:inline-block;padding:8px 12px;border-radius:8px;border:0;background:var(--accent);color:#fff;cursor:pointer}
+    table{width:100%;border-collapse:collapse}
+    table th,table td{padding:8px;border-bottom:1px solid #f1f1f4;text-align:left}
+    .muted{color:var(--muted)}
   </style>
 </head>
 <body>
-  <div class="wrap">
+  <header>
     <h1>Simple Health Diary</h1>
+  </header>
 
-    <div class="card dateRow">
-      <div>
-        <div style="font-size:14px;color:#444">Today's Date</div>
-        <div id="lblDate" style="font-weight:700;font-size:18px;margin-top:6px"></div>
-        <div class="muted">Use the calendar icon or type a date to view/edit other dates.</div>
+  <nav class="tabs" role="tablist">
+    <button id="tab-home" class="active">Home</button>
+    <button id="tab-meals">Meals</button>
+    <button id="tab-activity">Activity</button>
+    <button id="tab-reports">Reports</button>
+    <button id="tab-settings">Settings</button>
+  </nav>
+
+  <main>
+    <!-- HOME -->
+    <section id="home" class="card" aria-live="polite">
+      <h2>Today — <span id="todayDate"></span></h2>
+
+      <div class="card">
+        <h3>Sleep</h3>
+        <div class="row">
+          <div class="col">
+            <label>Bed time</label>
+            <input type="time" id="sleepStart">
+          </div>
+          <div class="col">
+            <label>Wake time</label>
+            <input type="time" id="sleepEnd">
+          </div>
+        </div>
+        <p class="small">Total hours: <strong id="sleepHours">0</strong></p>
       </div>
 
-      <div style="min-width:180px">
-        <label for="pickDate">Pick date (yyyy-mm-dd)</label>
-        <input id="pickDate" type="date" />
-        <div style="margin-top:8px;font-size:13px;color:#444">Status: <span id="status">Ready</span></div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div style="font-weight:700;margin-bottom:8px">Daily Entry</div>
-
-      <div class="row">
-        <div class="field">
-          <label>Wake-up time</label>
-          <input id="txtWakeUp" type="text" placeholder="e.g., 06:30 AM">
-        </div>
-
-        <div class="field small">
-          <label>Water (ml)</label>
-          <input id="txtWater" type="number" placeholder="ml">
-        </div>
-
-        <div class="field">
-          <label>Breakfast</label>
-          <input id="txtBreakfast" type="text" placeholder="breakfast items">
-        </div>
-
-        <div class="field">
-          <label>Lunch</label>
-          <input id="txtLunch" type="text" placeholder="lunch items">
-        </div>
-
-        <div class="field">
-          <label>Dinner</label>
-          <input id="txtDinner" type="text" placeholder="dinner items">
-        </div>
-
-        <div class="field small">
-          <label>Tea (cups)</label>
-          <input id="txtTea" type="number" placeholder="cups">
-        </div>
-
-        <div class="field small">
-          <label>Coffee (cups)</label>
-          <input id="txtCoffee" type="number" placeholder="cups">
-        </div>
-
-        <div class="field">
-          <label>Lime juice</label>
-          <input id="txtLime" type="text" placeholder="Lime / lemon drink">
-        </div>
-
-        <div class="field">
-          <label>Snacks</label>
-          <input id="txtSnacks" type="text" placeholder="snacks">
-        </div>
-
-        <div class="field small">
-          <label>Walking (minutes)</label>
-          <input id="txtWalk" type="number" placeholder="mins">
-        </div>
-
-        <div class="field small">
-          <label>Sleep time (hrs)</label>
-          <input id="txtSleep" type="number" placeholder="hours">
-        </div>
-
-        <div class="field small">
-          <label>Pulse (bpm)</label>
-          <input id="txtPulse" type="number" placeholder="pulse">
-        </div>
-
-        <div class="field small">
-          <label>BP (sys/diast)</label>
-          <input id="txtBP" type="text" placeholder="120/80">
-        </div>
-
-        <div class="field small">
-          <label>Weight (kg)</label>
-          <input id="txtWeight" type="number" step="0.1" placeholder="kg">
-        </div>
-
-        <div class="field small">
-          <label>Urine output (ml)</label>
-          <input id="txtUrine" type="number" placeholder="ml">
-        </div>
-
-        <div class="field" style="flex-basis:100%">
-          <label>Notes / Remarks</label>
-          <textarea id="txtNotes" placeholder="Any notes..."></textarea>
-        </div>
+      <div class="card">
+        <h3>Today's Meals & Calories</h3>
+        <div id="mealsSummary"></div>
       </div>
 
-      <div class="buttons">
-        <button onclick="saveEntry()">SAVE</button>
-        <button class="ghost" onclick="clearForm()">CLEAR</button>
-        <button class="ghost" onclick="loadToday()">LOAD TODAY</button>
-        <button class="export" onclick="exportCSV()">EXPORT CSV</button>
-        <button class="danger" onclick="deleteEntry()" title="Delete today's entry">DELETE</button>
+      <div class="card">
+        <h3>Activity</h3>
+        <div class="row">
+          <div class="col">
+            <label>Steps</label>
+            <input type="number" id="steps" min="0" value="0">
+          </div>
+          <div class="col">
+            <label>Extra exercise minutes</label>
+            <input type="number" id="exerciseMin" min="0" value="0">
+          </div>
+        </div>
+        <p class="small">Calories burnt: <strong id="calBurnt">0</strong> kcal</p>
       </div>
-    </div>
 
-    <div class="card">
-      <div class="flex-between">
-        <div style="font-weight:700">History</div>
-        <div class="muted">Tap a date to view/edit. Long-press to delete (mobile).</div>
+      <div class="card">
+        <h3>Daily Summary</h3>
+        <div class="summary">
+          <div class="item">
+            <div class="small">Calories eaten</div>
+            <div id="calEaten" style="font-weight:800;font-size:18px">0</div>
+          </div>
+          <div class="item">
+            <div class="small">Calories burnt</div>
+            <div id="caloriesBurntTotal" style="font-weight:800;font-size:18px">0</div>
+          </div>
+          <div class="item">
+            <div class="small">Net calories</div>
+            <div id="netCalories" style="font-weight:800;font-size:18px">0</div>
+          </div>
+          <div class="item">
+            <div class="small">Extra activity to burn surplus</div>
+            <div id="extraActivity" style="font-weight:800;font-size:14px">0 min walking</div>
+          </div>
+        </div>
+        <div style="margin-top:10px">
+          <button class="btn" id="saveDay">Save Today</button>
+          <button class="btn" id="exportData" style="background:#444;margin-left:6px">Export JSON</button>
+        </div>
       </div>
-      <div id="historyContainer" class="historyList" style="margin-top:8px"></div>
-      <div style="margin-top:8px">
-        <button class="ghost" onclick="clearAllData()" title="Remove all saved entries">Clear ALL saved data</button>
-      </div>
-    </div>
+    </section>
 
-  </div>
+    <!-- MEALS -->
+    <section id="meals" style="display:none">
+      <div class="card">
+        <h3>Add Meal</h3>
+        <label>Meal Type</label>
+        <select id="mealType">
+          <option value="breakfast">Breakfast</option>
+          <option value="lunch">Lunch</option>
+          <option value="dinner">Dinner</option>
+          <option value="snacks">Snacks</option>
+          <option value="beverages">Beverages</option>
+        </select>
+
+        <label style="margin-top:8px">Search Food</label>
+<input type="text" id="foodSearch" placeholder="Type to search...">
+
+<label style="margin-top:8px">Category Filter</label>
+<select id="foodCategoryFilter">
+  <option value="all">All</option>
+  <option value="breakfast">Breakfast</option>
+  <option value="rice">Rice</option>
+  <option value="curry">Curries</option>
+  <option value="bread">Roti / Bread</option>
+  <option value="snack">Snacks</option>
+  <option value="fruit">Fruits</option>
+  <option value="veg">Vegetables</option>
+  <option value="protein">Lentils / Protein</option>
+  <option value="beverage">Beverages</option>
+  <option value="sweet">Sweets</option>
+  <option value="dryfruit">Dry Fruits</option>
+  <option value="salad">Salads</option>
+  <option value="other">Others</option>
+</select>
+
+<label style="margin-top:8px">Food Item</label>
+        <select id="foodSelect"></select>
+
+        <div class="row" style="margin-top:8px">
+          <div class="col">
+            <label>Quantity (units)</label>
+            <input type="number" id="foodQty" value="1" min="0.1" step="0.1">
+          </div>
+          <div class="col">
+            <label>Notes</label>
+            <input id="foodNotes" placeholder="eg: with ghee / small plate">
+          </div>
+        </div>
+
+        <p class="small">Calories for this entry: <strong id="entryCal">0</strong> kcal</p>
+        <div style="margin-top:8px">
+          <button class="btn" id="addMealBtn">Add to Meal</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Today's Meal Items</h3>
+        <div id="todayMealList"></div>
+      </div>
+    </section>
+
+    <!-- ACTIVITY -->
+    <section id="activity" style="display:none">
+      <div class="card">
+        <h3>Add Activity</h3>
+        <label>Activity Type</label>
+        <select id="activityType">
+          <option value="walking">Walking</option>
+          <option value="running">Running</option>
+          <option value="yoga">Yoga</option>
+          <option value="housework">Housework</option>
+          <option value="other">Other</option>
+        </select>
+        <label style="margin-top:8px">Minutes</label>
+        <input type="number" id="activityMinutes" value="15" min="1">
+        <p class="small">Calories for this entry: <strong id="activityCal">0</strong> kcal</p>
+        <div style="margin-top:8px"><button class="btn" id="addActivityBtn">Add Activity</button></div>
+      </div>
+
+      <div class="card">
+        <h3>Logged Activities</h3>
+        <div id="activityList"></div>
+      </div>
+    </section>
+
+    <!-- REPORTS -->
+    <section id="reports" style="display:none">
+      <div class="card">
+        <h3>Weekly Report</h3>
+        <div id="weeklyReport"></div>
+      </div>
+
+      <div class="card">
+        <h3>Monthly Report</h3>
+        <div id="monthlyReport"></div>
+      </div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section id="settings" style="display:none">
+      <div class="card">
+        <h3>Profile</h3>
+        <div class="row">
+          <div class="col"><label>Age</label><input id="age" type="number"></div>
+          <div class="col"><label>Height (cm)</label><input id="height" type="number"></div>
+          <div class="col"><label>Weight (kg)</label><input id="weight" type="number"></div>
+        </div>
+        <label style="margin-top:8px">Activity Level</label>
+        <select id="activityLevel">
+          <option value="1.2">Sedentary</option>
+          <option value="1.375">Light</option>
+          <option value="1.55">Moderate</option>
+          <option value="1.725">Very active</option>
+        </select>
+        <div style="margin-top:8px"><button class="btn" id="saveProfile">Save Profile</button></div>
+      </div>
+
+      <div class="card">
+        <h3>Storage</h3>
+        <p class="small">Data is stored locally on your device (localStorage). You can export a JSON backup.</p>
+        <div><button class="btn" id="clearAll" style="background:#d9534f">Clear All Data</button></div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    Private PWA — For local use only • Built for Simple Health Diary
+  </footer>
 
 <script>
-/* -------------------------------
-   PWA Service Worker Registration
---------------------------------*/
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("./service-worker.js");
-}
+// --------- Utility & storage ---------
+const today = new Date();
+const yyyy = today.getFullYear();
+const mm = String(today.getMonth()+1).padStart(2,'0');
+const dd = String(today.getDate()).padStart(2,'0');
+const todayKey = `${yyyy}-${mm}-${dd}`;
 
-/* --------------------------------
-   Your Existing App JavaScript
---------------------------------*/
+document.getElementById('todayDate').textContent = todayKey;
 
-// Keys and helpers
-function dateKey(d) { return d; } // date in yyyy-mm-dd
-function nowDateISO() { return new Date().toISOString().slice(0,10); }
+let appState = JSON.parse(localStorage.getItem('health_diary')) || { profile:{}, diary:{} };
+appState.diary = appState.diary || {};
+appState.profile = appState.profile || {};
 
-// Element refs
-const lblDate = document.getElementById('lblDate');
-const pickDate = document.getElementById('pickDate');
-const status = document.getElementById('status');
-const historyContainer = document.getElementById('historyContainer');
+function saveState(){ localStorage.setItem('health_diary', JSON.stringify(appState)); }
 
-// form fields
-const ids = ["txtWakeUp","txtWater","txtBreakfast","txtLunch","txtDinner","txtTea","txtCoffee","txtLime","txtSnacks","txtWalk","txtSleep","txtPulse","txtBP","txtWeight","txtUrine","txtNotes"];
-function el(id){return document.getElementById(id)}
+// --------- Food DB (sample Indian items) ---------
+const FOOD_DB = [
+  {id:'idli',name:'Idli (1)',cal_per_unit:58},
+  {id:'dosa',name:'Plain Dosa (1 medium)',cal_per_unit:133},
+  {id:'chapati',name:'Chapati (1 medium)',cal_per_unit:120},
+  {id:'rice',name:'Cooked Rice (100g)',cal_per_unit:130,per:'100g'},
+  {id:'sambar',name:'Sambar (100ml)',cal_per_unit:50,per:'100ml'},
+  {id:'curd',name:'Curd (100g)',cal_per_unit:98,per:'100g'},
+  {id:'pongal',name:'Pongal (1 cup)',cal_per_unit:200},
+  {id:'upma',name:'Upma (1 cup)',cal_per_unit:180},
+  {id:'poha',name:'Poha (1 cup)',cal_per_unit:170},
+  {id:'tea',name:'Milk Tea (1 cup)',cal_per_unit:45},
+  {id:'coffee',name:'Coffee (black)',cal_per_unit:2},
+  {id:'vegcurry',name:'Veg curry (100g)',cal_per_unit:80,per:'100g'}
+];
 
-// initialize UI
-const todayKey = nowDateISO();
-lblDate.textContent = todayKey;
-pickDate.value = todayKey;
+// populate food select
+const foodSelect = document.getElementById('foodSelect');
+function renderFoodOptions(searchText = "", category = "all") {
+  foodSelect.innerHTML = "";
 
-// Load list of saved dates
-function getAllKeys(){
-  try{
-    const keys = JSON.parse(localStorage.getItem('_all_dates')) || [];
-    return keys;
-  }catch(e){ return [] }
-}
-function saveAllKeys(list){
-  localStorage.setItem('_all_dates', JSON.stringify(list));
-}
+  const filtered = FOOD_DB.filter(f => {
+    const matchesSearch = f.name.toLowerCase().includes(searchText.toLowerCase());
+    const matchesCat = category === "all" ? true : f.cat === category;
+    return matchesSearch && matchesCat;
+  });
 
-// Save entry for selected date
-function saveEntry(){
-  const date = pickDate.value || nowDateISO();
-  const data = {};
-  ids.forEach(k => { data[k] = el(k).value || "" });
-  localStorage.setItem(dateKey(date), JSON.stringify(data));
-  // maintain index
-  let keys = getAllKeys();
-  if(!keys.includes(date)) { keys.unshift(date); if(keys.length>1000) keys=keys.slice(0,1000); saveAllKeys(keys); }
-  status.textContent = 'Saved '+date;
-  refreshHistory();
-}
-
-// Load entry for a date into form
-function loadEntry(date){
-  const raw = localStorage.getItem(dateKey(date));
-  if(!raw){
-    clearForm();
-    status.textContent = 'No entry for '+date;
+  if (filtered.length === 0) {
+    const o = document.createElement("option");
+    o.textContent = "No items found";
+    o.value = "";
+    foodSelect.appendChild(o);
     return;
   }
-  const data = JSON.parse(raw);
-  ids.forEach(k => { el(k).value = data[k] || "" });
-  pickDate.value = date;
-  lblDate.textContent = date;
-  status.textContent = 'Loaded '+date;
-}
 
-// Load today's entry
-function loadToday(){ loadEntry(pickDate.value || nowDateISO()) }
-
-// Clear form fields only
-function clearForm(){
-  ids.forEach(k => { el(k).value = "" });
-  status.textContent = 'Form cleared';
-}
-
-// Delete today's entry
-function deleteEntry(){
-  const date = pickDate.value || nowDateISO();
-  if(!localStorage.getItem(dateKey(date))) { status.textContent='Nothing to delete for '+date; return; }
-  if(!confirm('Delete entry for '+date+' ?')) return;
-  localStorage.removeItem(dateKey(date));
-  // remove from keys
-  let keys = getAllKeys();
-  keys = keys.filter(k => k !== date);
-  saveAllKeys(keys);
-  status.textContent = 'Deleted '+date;
-  refreshHistory();
-  clearForm();
-}
-
-// Clear all saved data (danger)
-function clearAllData(){
-  if(!confirm('Delete ALL saved entries? This cannot be undone.')) return;
-  const keys = getAllKeys();
-  keys.forEach(k => localStorage.removeItem(k));
-  localStorage.removeItem('_all_dates');
-  status.textContent = 'All data removed';
-  refreshHistory();
-  clearForm();
-}
-
-// Export CSV (all data)
-function exportCSV(){
-  const keys = getAllKeys();
-  if(keys.length===0){ alert('No data to export'); return; }
-  const header = ['Date'].concat(ids);
-  const rows = [header];
-  keys.forEach(date => {
-    const raw = localStorage.getItem(date);
-    if(!raw) return;
-    const data = JSON.parse(raw);
-    const row = [date].concat(ids.map(k=> `"${(data[k]||'').toString().replace(/"/g,'""')}"`));
-    rows.push(row);
+  filtered.forEach(f => {
+    const o = document.createElement("option");
+    o.value = f.id;
+    o.textContent = `${f.name} (${f.cal} kcal)`;
+    foodSelect.appendChild(o);
   });
-  const csv = rows.map(r=> r.join(',')).join('\n');
-  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'health_diary_export.csv';
-  a.click();
-  URL.revokeObjectURL(url);
-  status.textContent = 'CSV Exported';
-}
 
-// Refresh history list in UI
-function refreshHistory(){
-  const keys = getAllKeys();
-  historyContainer.innerHTML = '';
-  if(keys.length===0){ historyContainer.innerHTML = '<div class="muted">No saved dates yet.</div>'; return; }
-  keys.forEach(date => {
-    const div = document.createElement('div');
-    div.className='historyItem';
-    const left = document.createElement('div');
-    left.innerHTML = `<div style="font-weight:600">${date}</div><div style="font-size:13px;color:#555">Click to load</div>`;
-    const right = document.createElement('div');
-    const btnLoad = document.createElement('button'); btnLoad.className='ghost'; btnLoad.style.padding='6px 8px'; btnLoad.textContent='Load';
-    btnLoad.onclick = ()=> loadEntry(date);
-    const btnDel = document.createElement('button'); btnDel.className='danger'; btnDel.style.padding='6px 8px'; btnDel.style.marginLeft='8px'; btnDel.textContent='Delete';
-    btnDel.onclick = ()=> { if(confirm('Delete '+date+'?')){ localStorage.removeItem(date); let ks=getAllKeys().filter(k=>k!==date); saveAllKeys(ks); refreshHistory(); status.textContent='Deleted '+date; } };
-    right.appendChild(btnLoad); right.appendChild(btnDel);
-    div.appendChild(left); div.appendChild(right);
-    historyContainer.appendChild(div);
+  updateEntryCal();
+
+// Search + category listeners
+if(document.getElementById("foodSearch")){
+  document.getElementById("foodSearch").addEventListener("input", () => {
+    const txt = document.getElementById("foodSearch").value;
+    const cat = document.getElementById("foodCategoryFilter").value;
+    renderFoodOptions(txt, cat);
   });
 }
 
-// on pickDate change load that date
-pickDate.addEventListener('change', ()=> loadEntry(pickDate.value));
+if(document.getElementById("foodCategoryFilter")){
+  document.getElementById("foodCategoryFilter").addEventListener("change", () => {
+    const txt = document.getElementById("foodSearch").value;
+    const cat = document.getElementById("foodCategoryFilter").value;
+    renderFoodOptions(txt, cat);
+  });
+}
+}
 
-// initial load
-(function init(){
-  // if no index, create
-  if(!localStorage.getItem('_all_dates')) saveAllKeys([]);
-  // show today date on top
-  lblDate.textContent = pickDate.value = nowDateISO();
-  loadToday();
-  refreshHistory();
-})();
+// Initial load
+renderFoodOptions(o)});
+
+// --------- Tabs navigation ---------
+const tabs = ['home','meals','activity','reports','settings'];
+tabs.forEach(t=>document.getElementById('tab-'+t).addEventListener('click', ()=>showTab(t)));
+function showTab(name){tabs.forEach(t=>{document.getElementById(t).style.display = (t===name?'':'none');document.getElementById('tab-'+t).classList.toggle('active', t===name)})}
+
+// --------- Sleep calc ---------
+document.getElementById('sleepStart').addEventListener('change', updateSleep);
+document.getElementById('sleepEnd').addEventListener('change', updateSleep);
+function updateSleep(){
+  const s=document.getElementById('sleepStart').value; const e=document.getElementById('sleepEnd').value;
+  if(!s||!e){document.getElementById('sleepHours').textContent='0'; return}
+  const [sh,sm]=s.split(':').map(Number); const [eh,em]=e.split(':').map(Number);
+  let start=new Date(); start.setHours(sh,sm,0,0);
+  let end=new Date(); end.setHours(eh,em,0,0);
+  if(end<=start) end.setDate(end.getDate()+1);
+  const diff=(end-start)/36e5; document.getElementById('sleepHours').textContent = diff.toFixed(2);
+}
+
+// --------- Meal logic ---------
+let todayMeals = appState.diary[todayKey]?.meals || { breakfast:[], lunch:[], dinner:[], snacks:[], beverages:[] };
+
+document.getElementById('foodQty').addEventListener('input', updateEntryCal);
+foodSelect.addEventListener('change', updateEntryCal);
+function findFood(id){return FOOD_DB.find(x=>x.id===id)}
+function updateEntryCal(){const id=foodSelect.value; const qty=parseFloat(document.getElementById('foodQty').value)||0; const f=findFood(id); let cal = (f.cal_per_unit || 0)*qty; document.getElementById('entryCal').textContent = Math.round(cal);}
+updateEntryCal();
+
+document.getElementById('addMealBtn').addEventListener('click', ()=>{
+  const type=document.getElementById('mealType').value; const id=foodSelect.value; const qty=parseFloat(document.getElementById('foodQty').value)||0; const notes=document.getElementById('foodNotes').value||''; const f=findFood(id);
+  if(!f || qty<=0) return alert('Select item and qty');
+  const cal = Math.round((f.cal_per_unit||0)*qty);
+  const entry = {id:f.id,name:f.name,qty,notes,cal,time:new Date().toISOString()};
+  todayMeals[type].push(entry);
+  renderMeals();
+renderFoodOptions(
+  document.getElementById('foodSearch')?.value || "",
+  document.getElementById('foodCategoryFilter')?.value || "all"
+);
+});
+
+function renderMeals(){
+  const container=document.getElementById('todayMealList'); container.innerHTML='';
+  const summary=document.getElementById('mealsSummary'); summary.innerHTML='';
+  ['breakfast','lunch','dinner','snacks','beverages'].forEach(k=>{
+    if(todayMeals[k].length){
+      const tbl = document.createElement('div'); tbl.innerHTML = `<h4>${k.toUpperCase()}</h4><table><thead><tr><th>Item</th><th>Qty</th><th>Cal</th></tr></thead></table>`;
+      const table = tbl.querySelector('table'); const tbody=document.createElement('tbody');
+      todayMeals[k].forEach(it=>{const tr=document.createElement('tr'); tr.innerHTML=`<td>${it.name}${it.notes? ' — '+it.notes:''}</td><td>${it.qty}</td><td>${it.cal}</td>`; tbody.appendChild(tr)});
+      table.appendChild(tbody); container.appendChild(tbl);
+    }
+  });
+  // summary calories eaten
+  const total = Object.values(todayMeals).flat().reduce((s,i)=>s+i.cal,0);
+  document.getElementById('calEaten').textContent = total;
+  updateCalories();
+}
+renderMeals();
+
+// --------- Activity logic ---------
+let todayActivities = appState.diary[todayKey]?.activities || [];
+
+document.getElementById('steps').addEventListener('input', ()=>{updateCalories()});
+document.getElementById('exerciseMin').addEventListener('input', ()=>{updateCalories()});
+
+document.getElementById('activityMinutes').addEventListener('input', ()=>{updateActivityCal()});
+document.getElementById('activityType').addEventListener('change', updateActivityCal);
+function calcActivityCalories(type,minutes){
+  // simple formulas (estimates)
+  switch(type){
+    case 'walking': return minutes*4; // kcal/min ~4
+    case 'running': return minutes*10;
+    case 'yoga': return minutes*3.2;
+    case 'housework': return minutes*4.5;
+    default: return minutes*4;
+  }
+}
+function updateActivityCal(){const type=document.getElementById('activityType').value; const min=parseFloat(document.getElementById('activityMinutes').value)||0; document.getElementById('activityCal').textContent = Math.round(calcActivityCalories(type,min));}
+updateActivityCal();
+
+document.getElementById('addActivityBtn').addEventListener('click', ()=>{
+  const type=document.getElementById('activityType').value; const min=parseFloat(document.getElementById('activityMinutes').value)||0; if(min<=0) return alert('Enter minutes');
+  const cal=Math.round(calcActivityCalories(type,min)); const entry={type,min,cal,time:new Date().toISOString()}; todayActivities.push(entry); renderActivities();
+});
+
+function renderActivities(){const c=document.getElementById('activityList'); c.innerHTML=''; if(!todayActivities.length){c.innerHTML='<p class="muted">No activities logged</p>'; return}
+  const tbl=document.createElement('table'); tbl.innerHTML='<thead><tr><th>Activity</th><th>Min</th><th>Cal</th></tr></thead>';
+  const tbody=document.createElement('tbody'); todayActivities.forEach(a=>{const tr=document.createElement('tr'); tr.innerHTML=`<td>${a.type}</td><td>${a.min}</td><td>${a.cal}</td>`; tbody.appendChild(tr)});
+  tbl.appendChild(tbody); c.appendChild(tbl);
+}
+renderActivities();
+
+// --------- Combined calories & save ---------
+function updateCalories(){
+  const eaten = Object.values(todayMeals).flat().reduce((s,i)=>s+i.cal,0);
+  const steps = parseInt(document.getElementById('steps').value)||0; const stepsCal = Math.round(steps * 0.04);
+  const extraMin = parseFloat(document.getElementById('exerciseMin').value)||0; // assume walking pace
+  const extraCal = Math.round(extraMin * 4);
+  const activitiesCal = todayActivities.reduce((s,a)=>s+a.cal,0);
+  const totalBurnt = stepsCal + extraCal + activitiesCal;
+
+  document.getElementById('calBurnt').textContent = stepsCal + activitiesCal;
+  document.getElementById('caloriesBurntTotal').textContent = totalBurnt;
+  document.getElementById('calEaten').textContent = eaten;
+  const net = eaten - totalBurnt;
+  document.getElementById('netCalories').textContent = net;
+  // extra activity to burn surplus
+  if(net>0){ const minsNeeded = Math.ceil(net/4); document.getElementById('extraActivity').textContent = minsNeeded + ' min walking'; }
+  else document.getElementById('extraActivity').textContent = 'No extra activity';
+}
+
+// Save Day
+document.getElementById('saveDay').addEventListener('click', ()=>{
+  // build day object
+  const sleepH = parseFloat(document.getElementById('sleepHours').textContent)||0;
+  const eaten = Object.values(todayMeals).flat().reduce((s,i)=>s+i.cal,0);
+  const steps = parseInt(document.getElementById('steps').value)||0; const stepsCal = Math.round(steps*0.04);
+  const extraMin = parseFloat(document.getElementById('exerciseMin').value)||0; const extraCal = Math.round(extraMin*4);
+  const activitiesCal = todayActivities.reduce((s,a)=>s+a.cal,0);
+  const totalBurnt = stepsCal + extraCal + activitiesCal;
+  const net = eaten - totalBurnt;
+  const dayObj = { date: todayKey, sleepHours: sleepH, meals: todayMeals, activities: todayActivities, steps, caloriesEaten:eaten, caloriesBurnt:totalBurnt, net }
+  appState.diary[todayKey] = dayObj; saveState(); alert('Saved locally');
+});
+
+// Export JSON
+document.getElementById('exportData').addEventListener('click', ()=>{
+  const data = JSON.stringify(appState, null, 2); const blob = new Blob([data],{type:'application/json'}); const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download='health_diary_backup_'+todayKey+'.json'; a.click(); URL.revokeObjectURL(url);
+});
+
+// Profile save & clear
+document.getElementById('saveProfile').addEventListener('click', ()=>{
+  appState.profile.age = parseInt(document.getElementById('age').value)||0;
+  appState.profile.height = parseFloat(document.getElementById('height').value)||0;
+  appState.profile.weight = parseFloat(document.getElementById('weight').value)||0;
+  appState.profile.activityLevel = parseFloat(document.getElementById('activityLevel').value)||1.2;
+  saveState(); alert('Profile saved locally');
+});
+
+document.getElementById('clearAll').addEventListener('click', ()=>{ if(confirm('Clear all saved data?')){ localStorage.removeItem('health_diary'); appState={profile:{},diary:{}}; location.reload(); }});
+
+// restore today's data if present
+if(appState.diary[todayKey]){
+  const day = appState.diary[todayKey];
+  if(day.meals) todayMeals = day.meals;
+  if(day.activities) todayActivities = day.activities;
+  if(day.steps) document.getElementById('steps').value = day.steps;
+  if(day.sleepHours) document.getElementById('sleepHours').textContent = day.sleepHours;
+}
+renderMeals(); renderActivities(); updateCalories();
+
+// load profile into settings
+if(appState.profile){ document.getElementById('age').value = appState.profile.age ||''; document.getElementById('height').value = appState.profile.height ||''; document.getElementById('weight').value = appState.profile.weight ||''; document.getElementById('activityLevel').value = appState.profile.activityLevel || '1.2'; }
+
+// --------- Reports (weekly & monthly) ---------
+function getDateDaysAgo(n){const d=new Date(); d.setDate(d.getDate()-n); const Y=d.getFullYear(); const M=String(d.getMonth()+1).padStart(2,'0'); const D=String(d.getDate()).padStart(2,'0'); return `${Y}-${M}-${D}`}
+
+function generateWeekly(){
+  const days = Array.from({length:7}).map((_,i)=>getDateDaysAgo(6-i));
+  const rows = [];
+  days.forEach(d=>{ const day = appState.diary[d]; rows.push({date:d, caloriesEaten: day?.caloriesEaten||0, caloriesBurnt: day?.caloriesBurnt||0, net: (day?.net)||0, sleepHours: day?.sleepHours||0}); });
+  // render
+  const c=document.getElementById('weeklyReport'); c.innerHTML=''; const tbl=document.createElement('table'); tbl.innerHTML='<thead><tr><th>Date</th><th>Eaten</th><th>Burnt</th><th>Net</th><th>Sleep</th></tr></thead>';
+  const tbody=document.createElement('tbody'); rows.forEach(r=>{const tr=document.createElement('tr'); tr.innerHTML=`<td>${r.date}</td><td>${r.caloriesEaten}</td><td>${r.caloriesBurnt}</td><td>${r.net}</td><td>${r.sleepHours}</td>`; tbody.appendChild(tr)}); tbl.appendChild(tbody); c.appendChild(tbl);
+}
+
+document.getElementById('tab-reports').addEventListener('click', generateWeekly);
+
+function generateMonthly(){
+  const now=new Date(); const Y=now.getFullYear(); const M=now.getMonth()+1; const rows=[]; const daysInMonth=new Date(Y,M,0).getDate();
+  for(let i=1;i<=daysInMonth;i++){ const d=`${Y}-${String(M).padStart(2,'0')}-${String(i).padStart(2,'0')}`; const day=appState.diary[d]; rows.push({date:d,eaten:day?.caloriesEaten||0,burnt:day?.caloriesBurnt||0,net:day?.net||0}) }
+  const c=document.getElementById('monthlyReport'); c.innerHTML=''; const totalEaten=rows.reduce((s,r)=>s+r.eaten,0); const totalBurnt=rows.reduce((s,r)=>s+r.burnt,0); const avgSleep = (Object.values(appState.diary).reduce((s,d)=>s+(d.sleepHours||0),0) / Math.max(1,Object.keys(appState.diary).length)).toFixed(2);
+  c.innerHTML = `<p class="small">Total eaten this month: <strong>${totalEaten}</strong> kcal • Total burnt: <strong>${totalBurnt}</strong> kcal • Avg sleep (all saved days): <strong>${avgSleep}</strong> hrs</p>`;
+}
+
+// generate reports on load
+generateWeekly(); generateMonthly();
+
+// register service worker
+if('serviceWorker' in navigator){navigator.serviceWorker.register('service-worker.js').then(()=>console.log('sw registered')).catch(err=>console.log('sw fail',err));}
+
 </script>
-
 </body>
 </html>
+```
+
+---
+
+## 2) manifest.json
+
+```json
+{
+  "name": "Simple Health Diary",
+  "short_name": "HealthDiary",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#6a5acd",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
+```
+
+> Note: put two icon files in `/icons/` (192 & 512). If you don't have them, the app still installs but the icon will be generic.
+
+---
+
+## 3) service-worker.js
+
+```js
+const CACHE_NAME = 'health-diary-v1';
+const FILES_TO_CACHE = [
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/service-worker.js'
+];
+
+self.addEventListener('install', (evt) => {
+  evt.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(FILES_TO_CACHE);
+    })
+  );
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (evt) => {
+  evt.waitUntil(
+    caches.keys().then((keyList) => Promise.all(
+      keyList.map((key) => { if (key !== CACHE_NAME) return caches.delete(key); })
+    ))
+  );
+  self.clients.claim();
+});
+
+self.addEventListener('fetch', (evt) => {
+  if (evt.request.method !== 'GET') return;
+  evt.respondWith(
+    caches.match(evt.request).then((response) => {
+      return response || fetch(evt.request).then(fetchResp=>{
+        return caches.open(CACHE_NAME).then(cache=>{ try{ cache.put(evt.request, fetchResp.clone()); }catch(e){} return fetchResp; });
+      }).catch(()=>{
+        // fallback to index for navigation
+        if (evt.request.mode === 'navigate') return caches.match('/index.html');
+      });
+    })
+  );
+});
+
 
